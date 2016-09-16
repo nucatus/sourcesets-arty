@@ -1,0 +1,61 @@
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath "org.jfrog.buildinfo:build-info-extractor-gradle:4.4.4"
+    }
+}
+
+group 'treb'
+version '1.0-SNAPSHOT'
+
+apply plugin: 'java'
+apply plugin: 'maven-publish'
+apply plugin: 'com.jfrog.artifactory'
+
+sourceCompatibility = 1.8
+
+configurations {
+    clientLib
+}
+
+sourceSets {
+    clientLib {
+        java {
+            srcDir 'src/main/java'
+            include 'treb/client/**'
+        }
+    }
+}
+
+task clientJar(type: Jar) {
+    baseName = "${appName}-client"
+    from sourceSets.clientLib.output
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+        clientLib(MavenPublication) {
+            artifact clientJar
+            pom.withXml {
+                asNode().appendNode('description', 'A demonstration of Maven POM customization')
+            }
+        }
+    }
+}
+
+artifactoryPublish {
+    publications(publishing.publications.clientLib)
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.11'
+}
